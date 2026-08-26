@@ -416,7 +416,7 @@ body{
 /* 复制按钮 */
 .copy-bar{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:1fr 1fr 1fr;
   gap:10px;
   margin-top:12px;
 }
@@ -704,12 +704,6 @@ body{
 </div>
 
 <div class="nav-area" id="navArea"></div>
-<div class="price-mode-bar">
-  <span class="pm-label">价格显示</span>
-  <button class="pm-btn active" data-mode="all" onclick="window._setPriceMode('all')">都显示</button>
-  <button class="pm-btn" data-mode="supply" onclick="window._setPriceMode('supply')">分销价</button>
-  <button class="pm-btn" data-mode="ctrl" onclick="window._setPriceMode('ctrl')">控价</button>
-</div>
 <div class="total-bar">共 <span class="total-num" id="totalCount">0</span> 款产品</div>
 <div id="results"></div>
 </div>
@@ -1448,9 +1442,8 @@ function makeCard(p){
   
   var hasLink = regUrl || flUrl;
   var copyBar='<div class="copy-bar">'+
-    '<button class="copy-btn copy-share" data-sn="'+esc(p.sn)+'" onclick="window._wechatOrder(this)" style="background:var(--ios-green);color:#fff">💬 微信拿货</button>'+
     '<button class="copy-btn copy-all" data-sn="'+esc(p.sn)+'" onclick="window._doCopy(this)">📋 复制全部</button>'+
-    (hasLink?'<button class="copy-btn copy-link" data-sn="'+esc(p.sn)+'" onclick="window._doCopyLink(this)">🔗 复制链接</button>':'<button class="copy-btn copy-all" style="visibility:hidden;pointer-events:none">占位</button>')+
+    (hasLink?'<button class="copy-btn copy-link" data-sn="'+esc(p.sn)+'" onclick="window._doCopyLink(this)">🔗 复制链接</button>':'')+
     '<button class="copy-btn copy-share" data-sn="'+esc(p.sn)+'" onclick="window._doCopySelect(this)">⚙️ 选择复制</button>'+
     '</div>';
   
