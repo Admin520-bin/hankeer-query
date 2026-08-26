@@ -264,6 +264,12 @@ body{
   font-size:17px;
 }
 
+/* 价格显示切换 */
+.price-mode-bar{display:flex;align-items:center;gap:8px;margin:0 4px 14px;flex-wrap:wrap}
+.pm-label{font-size:13px;color:var(--ios-text-sub);font-weight:600}
+.pm-btn{padding:6px 14px;border:1px solid var(--ios-separator);background:var(--ios-card);border-radius:16px;font-size:14px;cursor:pointer;color:var(--ios-text);font-weight:500;transition:all .15s}
+.pm-btn.active{background:var(--ios-blue);color:#fff;border-color:var(--ios-blue)}
+
 /* iOS 卡片 */
 .card{
   background:var(--ios-card);
@@ -698,6 +704,12 @@ body{
 </div>
 
 <div class="nav-area" id="navArea"></div>
+<div class="price-mode-bar">
+  <span class="pm-label">价格显示</span>
+  <button class="pm-btn active" data-mode="all" onclick="window._setPriceMode('all')">都显示</button>
+  <button class="pm-btn" data-mode="supply" onclick="window._setPriceMode('supply')">分销价</button>
+  <button class="pm-btn" data-mode="ctrl" onclick="window._setPriceMode('ctrl')">控价</button>
+</div>
 <div class="total-bar">共 <span class="total-num" id="totalCount">0</span> 款产品</div>
 <div id="results"></div>
 </div>
@@ -879,7 +891,6 @@ var s=atob(B64);var b=new Uint8Array(s.length);
 for(var i=0;i<s.length;i++)b[i]=s.charCodeAt(i);
 var DATA=JSON.parse(new TextDecoder().decode(b));
 window.DATA=DATA;
-var WECHAT_ORDER='Lin13559361067'; // 微信拿货默认微信号（档口报单），老板可在此一处修改
 
 /* ===== 状态管理 ===== */
 var STATE={
@@ -892,7 +903,8 @@ var STATE={
   filterOpen:false,
   selected:[],     // 批量选择的款号
   favorites:[],    // 收藏的款号
-  sharedFavs:null  // 来自分享链接的收藏夹（款号数组）
+  sharedFavs:null, // 来自分享链接的收藏夹（款号数组）
+  priceMode:'all'  // 价格显示：all / supply（分销价） / ctrl（控价）
 };
 
 /* ===== 收藏功能（localStorage） ===== */
@@ -981,29 +993,33 @@ function parsePrice(priceStr, stockStr){
 
 function renderPrice(pp, internal, rawPrice){
   if(!pp)return '';
-  
+
   // 内部模式：显示原价格字段
   if(internal && rawPrice){
     return '<span class="price-val">'+esc(rawPrice)+'</span>';
   }
-  
-  // 外部模式：拆分分销价和控价，分开展示
+
+  var mode=STATE.priceMode||'all';
+
+  // 外部模式：拆分分销价和控价
   var supplyParts=[];
   if(pp.smallPrice)supplyParts.push('小码¥'+pp.smallPrice);
   if(pp.largePrice)supplyParts.push('大码¥'+pp.largePrice);
   if(!pp.smallPrice && !pp.largePrice && pp.supplyPrice)supplyParts.push('¥'+pp.supplyPrice);
-  
+  var supply=supplyParts.length?('<span style="color:#2563eb;font-weight:700">分销价 '+supplyParts.join(' ')+'</span>'):'';
+  var ctrl=pp.ctrlPrice?('<span style="color:#dc2626;font-weight:700">控价 ¥'+pp.ctrlPrice+'</span>'):'';
+
+  if(mode==='supply')return supply || '<span style="color:#999">无分销价</span>';
+  if(mode==='ctrl')return ctrl || '<span style="color:#999">无控价</span>';
+
+  // 都显示
   var h='';
-  if(supplyParts.length>0){
-    h+='<span style="color:#2563eb;font-weight:700">分销价 '+supplyParts.join(' ')+'</span>';
-  }
-  if(pp.ctrlPrice){
+  if(supply)h+=supply;
+  if(ctrl){
     if(h)h+='<span style="color:#999;margin:0 6px">|</span>';
-    h+='<span style="color:#dc2626;font-weight:700">控价 ¥'+pp.ctrlPrice+'</span>';
+    h+=ctrl;
   }
-  if(!h && rawPrice){
-    h='<span class="price-val">'+esc(rawPrice)+'</span>';
-  }
+  if(!h && rawPrice)h='<span class="price-val">'+esc(rawPrice)+'</span>';
   return h || '';
 }
 
@@ -1131,6 +1147,15 @@ function clearPriceRange(){
   updateFilterCount();
   renderCurrent();
 }
+
+/* 价格显示一键切换 */
+window._setPriceMode=function(mode){
+  STATE.priceMode=mode;
+  document.querySelectorAll('.pm-btn').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-mode')===mode);
+  });
+  renderCurrent();
+};
 
 function matchFilters(p){
   if(p.discontinued)return false;
@@ -1897,24 +1922,40 @@ function renderSharedFavs(){
 }
 window._navToAll=function(){STATE.sharedFavs=null;doClear();};
 
-/* ===== 微信拿货 ===== */
+/* ===== 微信拿货（档口报单 + 仓库拿货） ===== */
+var WECHAT_LIST=[
+  {label:'档口报单（青创城B区3楼）',wx:'Lin13559361067'},
+  {label:'仓库拿货（晋江永和镇）',wx:'Yl112368'}
+];
 window._wechatOrder=function(btn){
   var sn=btn.getAttribute('data-sn');
-  var wx=WECHAT_ORDER;
-  var done=function(){showWechatHint(sn,wx)};
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(wx).then(done).catch(done);
-  }else{done()}
-};
-function showWechatHint(sn,wx){
+  var rows=WECHAT_LIST.map(function(it){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--ios-separator)">'+
+      '<div style="font-size:13px;color:var(--ios-text)">'+it.label+'<br><b style="color:var(--ios-green);font-size:17px">'+esc(it.wx)+'</b></div>'+
+      '<button class="btn btn-clear" style="padding:8px 14px;font-size:14px" onclick="window._copyWx(\''+it.wx+'\',this)">复制</button>'+
+      '</div>';
+  }).join('');
   var ov=document.createElement('div');
   ov.className='copy-overlay';
-  ov.innerHTML='<div class="copy-dialog" style="text-align:center;max-width:340px">'+
+  ov.innerHTML='<div class="copy-dialog" style="max-width:360px">'+
     '<div class="copy-dialog-header"><span class="copy-dialog-title">💬 微信拿货 · '+esc(sn)+'</span><button class="copy-dialog-close" onclick="this.closest(\'.copy-overlay\').remove()">&times;</button></div>'+
-    '<div style="font-size:15px;line-height:1.8;color:var(--ios-text);margin:10px 0">已复制拿货微信：<b style="color:var(--ios-green)">'+esc(wx)+'</b><br>打开微信添加好友，发送款号 <b>'+esc(sn)+'</b> 即可拿货</div>'+
-    '<div class="copy-dialog-actions"><button class="btn btn-search" onclick="this.closest(\'.copy-overlay\').remove()">知道了</button></div>'+
+    rows+
+    '<div style="font-size:13px;color:var(--ios-text-sub);margin-top:10px">加好友后发送款号 <b>'+esc(sn)+'</b> 即可拿货</div>'+
+    '<div class="copy-dialog-actions"><button class="btn btn-search" onclick="this.closest(\'.copy-overlay\').remove()">关闭</button></div>'+
     '</div>';
   document.body.appendChild(ov);
+};
+window._copyWx=function(wx,btn){
+  var done=function(){btn.textContent='✅ 已复制';setTimeout(function(){btn.textContent='复制'},1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(wx).then(done).catch(function(){_fallbackCopyWx(wx,btn)});
+  }else{_fallbackCopyWx(wx,btn)}
+};
+function _fallbackCopyWx(wx,btn){
+  var ta=document.createElement('textarea');ta.value=wx;ta.style.cssText='position:fixed;left:-9999px';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');btn.textContent='✅ 已复制';setTimeout(function(){btn.textContent='复制'},1500)}catch(e){}
+  document.body.removeChild(ta);
 }
 
 /* ===== 返回顶部 ===== */
