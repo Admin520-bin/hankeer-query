@@ -103,6 +103,19 @@ body{
 }
 .top-icon-btn:active{transform:scale(0.92);opacity:0.7}
 .top-icon-btn.active{background:var(--ios-blue);color:#fff}
+.top-icon-disc{
+  width:auto;
+  min-width:36px;
+  padding:0 10px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#8e8e93,#48484a);
+  color:#fff;
+  font-size:12px;
+  font-weight:600;
+  white-space:nowrap;
+  gap:4px
+}
+.top-icon-disc.active{background:linear-gradient(135deg,#ff3b30,#c62828)}
 
 /* iOS 搜索 */
 .search-wrap{
@@ -664,6 +677,7 @@ body{
 <div class="top-bar">
   <h1>🔍 瀚客尔产品查询器</h1>
   <div class="top-icons">
+    <button class="top-icon-btn top-icon-disc" onclick="window._navQ('已下架')" title="查看已下架">🚫 已下架</button>
     <button class="top-icon-btn" id="themeBtn" onclick="toggleTheme()" title="切换主题">🌙</button>
     <button class="top-icon-btn" id="adminBtn" onclick="toggleAdmin()" title="切换模式">🔒</button>
     <button class="top-icon-btn" onclick="showContactCard()" title="联系方式">📞</button>
@@ -1215,7 +1229,6 @@ var NAV_ITEMS=[
   {key:'夏季TOP',label:'☀️ 夏季TOP'},
   {key:'秋季TOP',label:'🍂 秋季TOP'},
   {key:'秋季新款',label:'🌿 秋季新款',highlight:true},
-  {key:'已下架',label:'🚫 已下架',highlight:true},
   {key:'表格',label:'📊 表格'}
 ];
 
@@ -1238,6 +1251,9 @@ window._navQ=function(key){
   STATE.sharedFavs=null;
   document.querySelectorAll('.nav-btn').forEach(function(el){
     el.classList.toggle('active',el.getAttribute('data-nav')===key);
+  });
+  document.querySelectorAll('.top-icon-disc').forEach(function(el){
+    el.classList.toggle('active',key==='已下架');
   });
   document.getElementById('searchBox').value='';
   
@@ -1402,6 +1418,7 @@ function doClear(){
   document.querySelectorAll('.nav-btn').forEach(function(el){
     el.classList.toggle('active',el.getAttribute('data-nav')==='全部');
   });
+  document.querySelectorAll('.top-icon-disc').forEach(function(el){el.classList.remove('active');});
   clearFilters();
   renderAll();
 }
