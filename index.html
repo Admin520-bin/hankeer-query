@@ -1678,7 +1678,7 @@ function clearSelection(){
 }
 
 function batchCopy(){
-  if(STATE.selected.length===0)return;
+  if(STATE.selected.length===0){alert('请先勾选要复制的款式（点卡片左上角的 ✓ 方框）');return;}
   var lines=[];
   for(var i=0;i<STATE.selected.length;i++){
     var p=findProduct(STATE.selected[i]);
@@ -1705,7 +1705,7 @@ function batchCopy(){
 }
 
 function batchCopyLink(){
-  if(STATE.selected.length===0)return;
+  if(STATE.selected.length===0){alert('请先勾选要复制的款式（点卡片左上角的 ✓ 方框）');return;}
   var lines=[];
   for(var i=0;i<STATE.selected.length;i++){
     var p=findProduct(STATE.selected[i]);
@@ -2110,6 +2110,7 @@ window.applyPriceRange=applyPriceRange;
 window.clearPriceRange=clearPriceRange;
 window.clearSelection=clearSelection;
 window.batchCopy=batchCopy;
+window.batchCopyLink=batchCopyLink;
 
 /* ===== 加载收藏 ===== */
 loadFavorites();
