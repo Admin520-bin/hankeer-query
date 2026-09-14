@@ -355,7 +355,7 @@ body{
 .icon-btn:active{transform:scale(0.9)}
 
 /* 产品主图 */
-.card-img-wrap{width:100%;aspect-ratio:4/3;margin-bottom:12px;border-radius:var(--ios-radius-sm);overflow:hidden;background:var(--ios-card);display:flex;align-items:center;justify-content:center;border:1px solid var(--ios-separator);position:relative}
+.card-img-wrap{width:100%;aspect-ratio:4/3;min-height:150px;margin-bottom:12px;border-radius:var(--ios-radius-sm);overflow:hidden;background:var(--ios-card);display:flex;align-items:center;justify-content:center;border:1px solid var(--ios-separator);position:relative}
 .card-img{width:100%;height:100%;object-fit:contain;display:block}
 .new-corner{position:absolute;top:8px;left:8px;z-index:2;background:linear-gradient(135deg,#34c759,#30d158);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:8px;box-shadow:0 2px 8px rgba(48,209,88,.35);letter-spacing:.5px;pointer-events:none;animation:newPulse 1.6s infinite}
 @keyframes newPulse{0%{box-shadow:0 0 0 0 rgba(48,209,88,.55)}70%{box-shadow:0 0 0 7px rgba(48,209,88,0)}100%{box-shadow:0 0 0 0 rgba(48,209,88,0)}}
@@ -1514,7 +1514,7 @@ function makeCard(p){
   if(detailBtns)copyBar='<div style="display:flex;gap:8px;margin-top:8px">'+detailBtns+'</div>'+copyBar;
   
   var corner = newBadgeVisible(p) ? '<span class="new-corner">NEW</span>' : '';
-  var imgHtml = p.img ? '<div class="card-img-wrap">'+corner+'<img class="card-img" src="'+esc(p.img)+'" loading="lazy" onerror="this.style.display=\'none\'" alt="'+esc(p.sn)+'"></div>' : '';
+  var imgHtml = p.img ? '<div class="card-img-wrap">'+corner+'<img class="card-img lazy-img" data-src="'+esc(p.img)+'" onerror="this.style.display=\'none\'" alt="'+esc(p.sn)+'"></div>' : '';
   var cardCls='card'+(p.discontinued?' card-disc':'');
   return '<div class="'+cardCls+'" id="card-'+esc(p.sn)+'">'+imgHtml+snLine+body+copyBar+'</div>';
 }
@@ -2138,6 +2138,42 @@ loadFavorites();
       if(Array.isArray(arr)&&arr.length)STATE.sharedFavs=arr;
     }catch(e){}
   }
+})();
+
+/* ===== 图片懒加载（兼容 iOS：不用原生 loading=lazy，避免 iOS/微信 WebView 不加载） ===== */
+(function(){
+  function lazyScan(){
+    var imgs=document.querySelectorAll('img.lazy-img[data-src]');
+    if(!imgs.length)return 0;
+    var vh=window.innerHeight||document.documentElement.clientHeight||600;
+    for(var i=0;i<imgs.length;i++){
+      var im=imgs[i];
+      var r=im.getBoundingClientRect();
+      // 提前一屏加载
+      if(r.top<vh+400 && r.bottom>-400){
+        var s=im.getAttribute('data-src');
+        if(s){
+          im.onload=function(){};
+          im.src=s;
+        }
+        im.removeAttribute('data-src');
+        im.classList.remove('lazy-img');
+      }
+    }
+    return document.querySelectorAll('img.lazy-img[data-src]').length;
+  }
+  window._lazyScan=lazyScan;
+  window.addEventListener('scroll',lazyScan,{passive:true});
+  window.addEventListener('resize',lazyScan);
+  window.addEventListener('orientationchange',lazyScan);
+  // 兜底：低频轮询，确保动态渲染的卡片也能被扫描到（无剩余懒图时自动停止）
+  var timer=setInterval(function(){
+    var left=lazyScan();
+    if(left===0){ /* 仍有新卡片可能插入，保持低频扫描但不密集 */ }
+  },400);
+  lazyScan();
+  setTimeout(lazyScan,300);
+  setTimeout(lazyScan,1200);
 })();
 
 /* ===== 初始化 ===== */
