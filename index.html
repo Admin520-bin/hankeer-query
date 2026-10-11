@@ -1256,6 +1256,7 @@ var NAV_ITEMS=[
   {key:'夏季TOP',label:'☀️ 夏季TOP'},
   {key:'秋季TOP',label:'🍂 秋季TOP'},
   {key:'秋季新款',label:'🌿 秋季新款',highlight:true},
+  {key:'加绒款',label:'🧥 加绒款',highlight:true},
   {key:'表格',label:'📊 表格'}
 ];
 
@@ -1289,6 +1290,7 @@ window._navQ=function(key){
   if(key==='夏季TOP'){doShowSummerTop();return}
   if(key==='秋季TOP'){doShowAutumnTop();return}
   if(key==='秋季新款'){doShowAutumnNew();return}
+  if(key==='加绒款'){doShowFleece();return}
   if(key==='已下架'){doShowDiscontinued();return}
   if(key==='表格'){doShowTables();return}
   
@@ -1320,6 +1322,11 @@ window._navQ=function(key){
   document.getElementById('searchBox').value=key;
   doSearch();
 };
+
+function doShowFleece(){
+  var f=DATA.filter(function(p){return p.fleece&&matchFilters(p)});
+  renderResults(f,'🧥 加绒款');
+}
 
 function doShowTop(){
   var tops=DATA.filter(function(p){return p.ranking&&matchFilters(p)});
